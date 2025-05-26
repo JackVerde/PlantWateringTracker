@@ -4,10 +4,6 @@
 
 Keep your leafy friends happy and hydrated! Plant Watering Tracker is a simple Android application built with Jetpack Compose to help you remember when to water your plants.
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/GiacomoManfu/PlantWateringTracker/main/art/app_showcase.gif" width="300">
-</p>
-
 ## ✨ Features
 
 *   **Plant List:** View all your plants at a glance in a clean, modern grid layout.
@@ -77,11 +73,3 @@ You can also open an issue to discuss potential changes or report bugs.
 ## 📜 License
 
 Distributed under the MIT License. See `LICENSE` file for more information.
-
-[https://github.com/GiacomoManfu/PlantWateringTracker/blob/main/LICENSE](https://github.com/GiacomoManfu/PlantWateringTracker/blob/main/LICENSE)
-
-## 📧 Contact
-
-Giacomo Manfu - (Contact details optional, you can link to your GitHub profile)
-
-Project Link: [https://github.com/GiacomoManfu/PlantWateringTracker](https://github.com/GiacomoManfu/PlantWateringTracker)
