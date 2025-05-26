@@ -1,10 +1,12 @@
 package com.giacomo.plantwateringtracker
 
 import android.content.Context
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -23,7 +25,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -38,7 +42,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import coil.compose.rememberAsyncImagePainter
+import coil.request.ImageRequest
 import com.giacomo.plantwateringtracker.ui.theme.PlantWateringTrackerTheme
+import androidx.core.net.toUri
 
 
 class MainActivity : ComponentActivity() {
@@ -315,50 +322,109 @@ fun PlantListScreen(modifier: Modifier = Modifier, viewModel: PlantViewModel, na
         }
     }
 }
-
 @Composable
 fun PlantItem(plant: Plant, onWater: () -> Unit, onClick: () -> Unit) {
+    val context = LocalContext.current
+
     Card(
         modifier = Modifier
-            .fillMaxWidth() // Makes the card take the full width of its parent (grid cell)
-            .clickable(onClick = onClick), // Make the whole card clickable
+            .fillMaxWidth() // Takes full width of the grid cell
+            .aspectRatio(1f) // Makes the card square, good for images
+            .clickable(onClick = onClick),
         shape = MaterialTheme.shapes.medium,
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-    ) {
-        Column( // Use Column to stack text and button vertically
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp), // Add padding around the content
-            horizontalAlignment = Alignment.CenterHorizontally // Center content horizontally
-        ) {
-            // Plant Name
-            Text(
-                text = plant.name,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-                textAlign = TextAlign.Center
-            )
-
-            Spacer(modifier = Modifier.height(8.dp)) // Space between name and last watered
-
-            // Last Watered Text
-            val lastWateredText = when (plant.lastWatered) {
-                0L -> "Today"
-                1L -> "Yesterday"
-                else -> "${plant.lastWatered} days ago"
+        colors = CardDefaults.cardColors(
+            // If there's an image, make card background transparent to show image through Box
+            // Otherwise, use the default surfaceVariant color
+            containerColor = if (plant.imageUri.isNullOrEmpty()) {
+                MaterialTheme.colorScheme.surfaceVariant
+            } else {
+                Color.Transparent // Will be covered by the image Box
             }
-            Text(text = lastWateredText, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface)
+        )
+    ) {
+        Box( // Use Box to layer image and content
+            modifier = Modifier.fillMaxSize(),
+            // Align content to bottom-center if there's an image, otherwise center everything
+            contentAlignment = if (plant.imageUri.isNullOrEmpty()) Alignment.Center else Alignment.BottomCenter
+        ) {
+            // Background Image (only if imageUri exists)
+            if (!plant.imageUri.isNullOrEmpty()) {
+                Image(
+                    painter = rememberAsyncImagePainter(
+                        ImageRequest.Builder(context)
+                            .data(plant.imageUri.toUri()) // Parse the stored URI string
+                            .crossfade(true)
+                            .error(android.R.drawable.stat_notify_error) // Fallback for error
+                            .placeholder(android.R.drawable.ic_menu_gallery) // Placeholder while loading
+                            .build()
+                    ),
+                    contentDescription = "Image of ${plant.name}",
+                    contentScale = ContentScale.Crop, // Crop image to fill the card
+                    modifier = Modifier.fillMaxSize()
+                )
+                // Scrim: Dark gradient overlay for better text readability on images
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.5f)),
+                                startY = LocalContext.current.resources.displayMetrics.heightPixels * 0.5f, // Start gradient higher up
+                                endY = Float.POSITIVE_INFINITY
+                            )
+                        )
+                )
+            }
 
-            Spacer(modifier = Modifier.height(12.dp)) // Space between text and button
-
-            // Water Button
-            Button(
-                onClick = onWater,
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)
+            // Original content (Text and Button)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(if (plant.imageUri.isNullOrEmpty()) 16.dp else 12.dp), // Less padding when image is present
+                horizontalAlignment = Alignment.CenterHorizontally // Always center content horizontally
             ) {
-                Text("Water", color = MaterialTheme.colorScheme.onTertiary)
+                // Determine text color based on whether an image is present
+                val textColor = if (plant.imageUri.isNullOrEmpty()) {
+                    MaterialTheme.colorScheme.onSurface
+                } else {
+                    Color.White // Use white text on images
+                }
+
+                Text(
+                    text = plant.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = textColor,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(if (plant.imageUri.isNullOrEmpty()) 8.dp else 4.dp))
+
+                val lastWateredText = when (plant.lastWatered) {
+                    0L -> "Today"
+                    1L -> "Yesterday"
+                    else -> "${plant.lastWatered} days ago"
+                }
+                Text(
+                    text = lastWateredText,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (plant.imageUri.isNullOrEmpty()) textColor else textColor.copy(alpha = 0.85f), // Slightly dimmer for secondary text on image
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(if (plant.imageUri.isNullOrEmpty()) 12.dp else 8.dp))
+
+                Button(
+                    onClick = onWater,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.tertiary,
+                        contentColor = MaterialTheme.colorScheme.onTertiary // This should be fine for both cases
+                    )
+                    // You might want to adjust button size or style if it's over an image
+                ) {
+                    Text("Water") // Text color on button is already handled by contentColor
+                }
             }
         }
     }
