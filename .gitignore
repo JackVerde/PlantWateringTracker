@@ -1,3 +1,4 @@
+gitignore
 # Gradle files
 .gradle/
 build/
@@ -14,20 +15,35 @@ captures/
 .cxx/
 *.apk
 output.json
+# Android Studio's Build Analyzer output
+build_analyzer_output/
 
-# IntelliJ
+# IntelliJ / Android Studio specific files
 *.iml
 .idea/
 misc.xml
 deploymentTargetDropDown.xml
 render.experimental.xml
+# User-specific IntelliJ files (if .idea/ itself isn't ignored, but safer to ignore all .idea/)
+# .idea/workspace.xml
+# .idea/shelf/
 
-# Keystore files
+# Keystore files (CRITICAL - DO NOT COMMIT)
 *.jks
 *.keystore
 
-# Google Services (e.g. APIs or Firebase)
+# Google Services (e.g. APIs or Firebase - often better to ignore)
 google-services.json
 
 # Android Profiling
 *.hprof
+
+# Mac OS generated files
+.DS_Store
+
+# Windows generated files
+Thumbs.db
+Desktop.ini
+
+# Environment variables file (if you use one)
+# .env
